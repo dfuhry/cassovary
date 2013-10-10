@@ -138,6 +138,8 @@ object LabelPropagationRunner {
 	  // TODO: evaluate precision of predicted labels for held-out users.
 	  var predictedCorrect = 0
 	  var predictedCorrect2 = 0
+	  var predictedCorrect3 = 0
+	  val dampingAmount = (1.0D - dampenAmt) / graph.nodeCount
 	  lp.view.zipWithIndex.foreach{ case (nodeArr, nodeIdx) => {
 	    if (holdOutUser(nodeIdx)) {
 	      val actualTopic = uidxTidx(nodeIdx)
@@ -146,10 +148,18 @@ object LabelPropagationRunner {
                 predictedCorrect = predictedCorrect + 1
 	      }
 	      // Normalize by topic prior.
-	      var predictedTopic2 = nodeArr.view.zipWithIndex.maxBy(v => v._1 / topicDistrNorm.get(v._2).get)._2
+	      var predictedTopic2 = nodeArr.view.zipWithIndex.maxBy(v => v._1.toDouble / topicDistrNorm.get(v._2).get)._2
 	      if (predictedTopic2 == actualTopic) {
                 predictedCorrect2 = predictedCorrect2 + 1
 	      }
+
+              
+	      var predictedTopic3 = nodeArr.view.zipWithIndex.maxBy(v => (v._1.toDouble - dampingAmount) / topicDistrNorm.get(v._2).get)._2 
+	      if (predictedTopic3 == actualTopic) {
+                predictedCorrect3 = predictedCorrect3 + 1
+	      }
+
+	      printf("nodeIdx: %d, actualTopic: %d, predictedTopic: %d, predictedTopic2: %d, predictedTopic3: %d\n", nodeIdx, actualTopic, predictedTopic, predictedTopic2, predictedTopic3)
 	    }
 	  }}
 	  

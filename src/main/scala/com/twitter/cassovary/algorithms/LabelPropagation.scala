@@ -67,10 +67,10 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
   private val log = Logger.get("LabelPropagation")
 
   val dampingFactor = params.dampingFactor
-  //val dampingAmount = (1.0D - dampingFactor) / graph.nodeCount
+  val dampingAmount = (1.0D - dampingFactor) / graph.nodeCount
   val numTopics = uidxTidx.reduceLeft(_ max _) + 1
-  val dampingAmount = new Array[Double](numTopics)
-  for ((dummyAmt, i) <- dampingAmount.view.zipWithIndex) dampingAmount(i) = uidxTidx.count(_ == i).toDouble / graph.nodeCount.toDouble;
+  //val dampingAmount = new Array[Double](numTopics)
+  //for ((dummyAmt, i) <- dampingAmount.view.zipWithIndex) dampingAmount(i) = uidxTidx.count(_ == i).toDouble / graph.nodeCount.toDouble;
 
   /**
    * Execute Label Propagation with the desired params
@@ -113,6 +113,7 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
     val convergFname = "label_propagation_results/dampenAmt_" + params.dampingFactor + "-pageRankIters_" + params.iterations.get + ".converg.tsv"
     val convergWriter = new PrintWriter(new File(convergFname))
     var afterPR = beforePR
+    printf("Beginning iteration\n")
     (0 until params.iterations.get).foreach { i =>
       log.info("Beginning %sth iteration".format(i))
       afterPR = iterate(beforePR)
@@ -159,18 +160,18 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
 
     log.info("Damping...")
     val progress_damp = Progress("pagerank_damp", 65536, Some(graph.nodeCount))
-    //if (dampingAmount > 0) {
+    if (dampingAmount > 0) {
       graph.foreach { node =>
         //afterPR(node.id) = dampingAmount + dampingFactor * afterPR(node.id)
 	afterPR(node.id).view.zipWithIndex.foreach { case (weight, topic_idx) => 
-	  //afterPR(node.id)(topic_idx) = dampingAmount + dampingFactor * afterPR(node.id)(topic_idx)
+	  afterPR(node.id)(topic_idx) = dampingAmount + dampingFactor * afterPR(node.id)(topic_idx)
 	  // TODO: make first parameter the topic prior.
-	  afterPR(node.id)(topic_idx) = (1.0 - dampingFactor) * dampingAmount(topic_idx) + dampingFactor * afterPR(node.id)(topic_idx)
+	  //afterPR(node.id)(topic_idx) = (1.0 - dampingFactor) * dampingAmount(topic_idx) + dampingFactor * afterPR(node.id)(topic_idx)
 	}
         progress_damp.inc
       }
       //printf("Frobenius norm after damping: %.10f\n", convergence(beforePR, afterPR))
-    //}
+    }
 
 
     afterPR
