@@ -16,6 +16,7 @@ package com.twitter.cassovary.algorithms
 import com.twitter.cassovary.graph.{DirectedGraph, GraphDir}
 import net.lag.logging.Logger
 import com.twitter.cassovary.util.Progress
+import java.io.{File,PrintWriter}
 
 /**
  * Parameters for PageRank
@@ -56,6 +57,7 @@ object LabelPropagation {
    */
   def iterate(graph: DirectedGraph, idxToTopic: Array[Int], params: LabelPropagationParams, prMatrix: Array[Array[Double]]) = {
     val lp = new LabelPropagation(graph, idxToTopic, params)
+    printf("LabelPropagation iterate calling iterate. Total memory: %d\n", Runtime.getRuntime.freeMemory())    
     lp.iterate(prMatrix: Array[Array[Double]])
   }
 }
@@ -65,7 +67,10 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
   private val log = Logger.get("LabelPropagation")
 
   val dampingFactor = params.dampingFactor
-  val dampingAmount = (1.0D - dampingFactor) / graph.nodeCount
+  //val dampingAmount = (1.0D - dampingFactor) / graph.nodeCount
+  val numTopics = uidxTidx.reduceLeft(_ max _) + 1
+  val dampingAmount = new Array[Double](numTopics)
+  for ((dummyAmt, i) <- dampingAmount.view.zipWithIndex) dampingAmount(i) = uidxTidx.count(_ == i).toDouble / graph.nodeCount.toDouble;
 
   /**
    * Execute Label Propagation with the desired params
@@ -82,21 +87,40 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
     //for ((nodeArr, i) <- beforePR.view.zipWithIndex) beforePr(i) = new Array[Double](uidxTidx.size, 0.0); 
     //for ((nodeArr, i) <- beforePR.view.zipWithIndex) beforePr(i)(uidxTidx(i)) = 1.0;
     
-    log.info("Initializing starting LabelPropagation...")
+    log.info("Initializing LabelPropagation...")
     val progress = Progress("pagerank_init", 65536, Some(graph.nodeCount))
     //val initialPageRankValue = 1.0D / graph.nodeCount
     graph.foreach { node =>
       //beforePR(node.id) = initialPageRankValue
-      beforePR(node.id) = new Array[Double](uidxTidx.size); 
-      if (uidxTidx(node.id) != -1)
-        beforePR(node.id)(uidxTidx(node.id)) = 1.0;
+      //printf("LabelPropagation.run allocating array of size %d for node %d\n", numTopics, node.id)
+      beforePR(node.id) = new Array[Double](numTopics); 
+      if (node.id >= uidxTidx.size) {
+        printf("Error: node.id %d >= uidxTidx.size %d\n", node.id, uidxTidx.size);
+        val minNodeId = graph.map { case node => node.id }.reduceLeft(_ min _)
+        printf("min node.id: %d\n", minNodeId)
+	val maxNodeId = graph.map { case node => node.id }.reduceLeft(_ max _)
+	printf("max node.id: %d\n", maxNodeId)
+        
+      }
+      if (uidxTidx(node.id) != -1) {
+	val topicCount = uidxTidx.count(_ == uidxTidx(node.id))
+	//printf("topic count for topic %d: %d\n", uidxTidx(node.id), topicCount)
+        beforePR(node.id)(uidxTidx(node.id)) = 1.0D / topicCount;
+      }
       progress.inc
     }
 
+    val convergFname = "label_propagation_results/dampenAmt_" + params.dampingFactor + "-pageRankIters_" + params.iterations.get + ".converg.tsv"
+    val convergWriter = new PrintWriter(new File(convergFname))
+    var afterPR = beforePR
     (0 until params.iterations.get).foreach { i =>
       log.info("Beginning %sth iteration".format(i))
-      beforePR = iterate(beforePR)
+      afterPR = iterate(beforePR)
+      convergWriter.printf("%d\t%.12f\n", int2Integer(i), double2Double(convergence(beforePR, afterPR)))
+      convergWriter.flush()
+      beforePR = afterPR
     }
+    convergWriter.close()
 
     beforePR
   }
@@ -107,7 +131,9 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
    * @return PageRank values after the iteration
    */
   def iterate(beforePR: Array[Array[Double]]) = {
+    val numTopics = beforePR(0).size
     val afterPR = new Array[Array[Double]](graph.maxNodeId + 1)
+    for ((afterPRRow, i) <- afterPR.view.zipWithIndex) afterPR(i) = new Array[Double](numTopics)
 
     log.info("Calculating new Label Propagation values based on previous iteration...")
     val progress = Progress("pagerank_calc", 65536, Some(graph.nodeCount))
@@ -121,6 +147,7 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
       node.neighborIds(GraphDir.OutDir).foreach { neighborId =>
         //afterPR(neighborId) += givenPageRank
         //afterPR(neighborId) += givenTopicRank
+	//printf("processing node %d neighborId %d\n", node.id, neighborId);
 	afterPR(neighborId).view.zipWithIndex.foreach { case (weight, topic_idx) =>
 	  afterPR(neighborId)(topic_idx) += givenTopicRank(topic_idx)
 	}
@@ -128,18 +155,36 @@ private class LabelPropagation(graph: DirectedGraph, uidxTidx: Array[Int], param
       progress.inc
     }
 
+    //printf("Frobenius norm before damping: %.10f\n", convergence(beforePR, afterPR))
+
     log.info("Damping...")
     val progress_damp = Progress("pagerank_damp", 65536, Some(graph.nodeCount))
-    if (dampingAmount > 0) {
+    //if (dampingAmount > 0) {
       graph.foreach { node =>
         //afterPR(node.id) = dampingAmount + dampingFactor * afterPR(node.id)
 	afterPR(node.id).view.zipWithIndex.foreach { case (weight, topic_idx) => 
-	  afterPR(node.id)(topic_idx) = dampingAmount + dampingFactor * afterPR(node.id)(topic_idx)
+	  //afterPR(node.id)(topic_idx) = dampingAmount + dampingFactor * afterPR(node.id)(topic_idx)
+	  // TODO: make first parameter the topic prior.
+	  afterPR(node.id)(topic_idx) = (1.0 - dampingFactor) * dampingAmount(topic_idx) + dampingFactor * afterPR(node.id)(topic_idx)
 	}
         progress_damp.inc
       }
-    }
+      //printf("Frobenius norm after damping: %.10f\n", convergence(beforePR, afterPR))
+    //}
+
+
     afterPR
+  }
+
+  // Compute Frobenius norm (sum of squares of elementwise differences) between two matrices.
+  def convergence(beforePR: Array[Array[Double]], afterPR: Array[Array[Double]]) = {
+    var ssq = 0.0;
+    beforePR.view.zipWithIndex.foreach { case (nodeArr, node_idx) =>
+      nodeArr.view.zipWithIndex.foreach { case (weight, topic_idx) => 
+        ssq += math.pow(weight - afterPR(node_idx)(topic_idx), 2)
+      }
+    }
+    ssq
   }
 
 }

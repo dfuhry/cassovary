@@ -29,6 +29,11 @@ if [ $BUILD_PACKAGE = build ]; then
   $root/sbt update
   echo Building Cassovary jar...
   $root/sbt package
+  SBT_PACKAGE_RET=$?
+  if [ $SBT_PACKAGE_RET -ne 0 ]; then
+    echo "Error: Building Cassovary jar failed with exit code $SBT_PACKAGE_RET"
+    exit $SBT_PACKAGE_RET
+  fi
 fi
 
 JAVA_CP=(
@@ -43,7 +48,12 @@ mkdir -p classes
 rm -rf classes/*
 echo Compiling $EXAMPLE ...
 scalac -cp $JAVA_CP -d classes $EXAMPLE.scala
+SCALAC_RET=$?
+if [ $SCALAC_RET -ne 0 ]; then
+  echo "Error: scalac failed with exit code $SCALAC_RET"
+  exit $SCALAC_RET
+fi
 
 echo Running $EXAMPLE...
-JAVA_OPTS="-server -Xmx6g -Xms1g"
+JAVA_OPTS="-server -Xmx15g -Xms1g"
 java ${JAVA_OPTS} -cp $JAVA_CP:classes $EXAMPLE $NUM_NODES
