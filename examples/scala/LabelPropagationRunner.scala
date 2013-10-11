@@ -39,11 +39,11 @@ object LabelPropagationRunner {
     var uidxTidx = (Source.fromFile("/Users/dfuhry/gssl/dfuhry-kfu-edges-7.uincrid_t1incrid").getLines() map ( tidxStr => topicIdxToInt(tidxStr) )).toArray
     //{ case ("") => -1 case (s) => s.toInt }.toList;
     val numLabeledUsers = uidxTidx.count(_ != -1)
-    val topicDistrUnnorm = uidxTidx.filter(v => v != -1).foldLeft[Map[Int,Int]](Map.empty)((m, c) => m + (c-> (m.getOrElse(c, 0) + 1)))
-    printf("topicDistrUnnorm: %s\n", topicDistrUnnorm.toString())
-    val topicDistrNorm = Map[Int,Double](topicDistrUnnorm.view.map{ case (topicIdx, topicCt) => (topicIdx, topicCt.toDouble / numLabeledUsers.toDouble) }.toList: _ *)
-    printf("topicDistrNorm: %s\n", topicDistrNorm.toString())
-
+    //val topicDistrUnnorm = uidxTidx.filter(_ != -1).foldLeft[Map[Int,Int]](Map.empty)((m, c) => m + (c-> (m.getOrElse(c, 0) + 1)))
+    //printf("topicDistrUnnorm: %s\n", topicDistrUnnorm.toString())
+    //val topicDistrNorm = Map[Int,Double](topicDistrUnnorm.view.map{ case (topicIdx, topicCt) => (topicIdx, topicCt.toDouble / numLabeledUsers.toDouble) }.toList: _ *)
+    //printf("topicDistrNorm: %s\n", topicDistrNorm.toString())
+    val numTopics = uidxTidx.filter(_ != 1).distinct.size
 
     val uidSNLines = Source.fromFile("/Users/dfuhry/gssl/dfuhry_kfu_users_ids").getLines()
     val uidSNSplit = uidSNLines.map(_.split("\t")).map{case Array(s1, s2) => Pair(s1, s2) case _ => Pair("", "")}
@@ -112,7 +112,8 @@ object LabelPropagationRunner {
           }
           */
       
-          val outFname = "label_propagation_results/dampenAmt_" + dampenAmt + "-pageRankIters_" + pageRankIters + ".tsv"
+	  val outFBase = "label_propagation_results/dampenAmt_" + dampenAmt + "-pageRankIters_" + pageRankIters + "-fold_" + fold
+          val outFname = outFBase + ".tsv"
           printf("writing propagation result to %s.\n", outFname)
       
           val writer = new PrintWriter(new File(outFname))
@@ -135,10 +136,12 @@ object LabelPropagationRunner {
       
           writer.close()
 
-	  // TODO: evaluate precision of predicted labels for held-out users.
+	  // Evaluate precision of predicted labels for held-out users.
+	  var contingency = new Array[Array[Int]](numTopics)
+	  contingency.view.zipWithIndex.foreach{ case (dummyRow, topicIdx) => {
+	    contingency(topicIdx) = new Array[Int](numTopics)
+	  }}
 	  var predictedCorrect = 0
-	  var predictedCorrect2 = 0
-	  var predictedCorrect3 = 0
 	  val dampingAmount = (1.0D - dampenAmt) / graph.nodeCount
 	  lp.view.zipWithIndex.foreach{ case (nodeArr, nodeIdx) => {
 	    if (holdOutUser(nodeIdx)) {
@@ -147,24 +150,38 @@ object LabelPropagationRunner {
 	      if (predictedTopic == actualTopic) {
                 predictedCorrect = predictedCorrect + 1
 	      }
-	      // Normalize by topic prior.
-	      var predictedTopic2 = nodeArr.view.zipWithIndex.maxBy(v => v._1.toDouble / topicDistrNorm.get(v._2).get)._2
-	      if (predictedTopic2 == actualTopic) {
-                predictedCorrect2 = predictedCorrect2 + 1
-	      }
-
+	      contingency(actualTopic)(predictedTopic) += 1
               
-	      var predictedTopic3 = nodeArr.view.zipWithIndex.maxBy(v => (v._1.toDouble - dampingAmount) / topicDistrNorm.get(v._2).get)._2 
-	      if (predictedTopic3 == actualTopic) {
-                predictedCorrect3 = predictedCorrect3 + 1
-	      }
-
-	      printf("nodeIdx: %d, actualTopic: %d, predictedTopic: %d, predictedTopic2: %d, predictedTopic3: %d\n", nodeIdx, actualTopic, predictedTopic, predictedTopic2, predictedTopic3)
+	      //printf("nodeIdx: %d, actualTopic: %d, predictedTopic: %d\n", nodeIdx, actualTopic, predictedTopic)
 	    }
 	  }}
+	  var predictedCorrect2 = (for (i <- 0 until numTopics) yield contingency(i)(i)).sum
+	  assert(predictedCorrect == predictedCorrect2)
 	  
-	  printf("Without topic normalizing, among %d held out users, %d topics (%f) predicted correct.\n", numHeldOutUsers, predictedCorrect, (predictedCorrect.toDouble / numHeldOutUsers))
-	  printf("With topic normalizing, among %d held out users, %d topics (%f) predicted correct.\n", numHeldOutUsers, predictedCorrect2, (predictedCorrect2.toDouble / numHeldOutUsers))
+	  val outEvalFname = outFBase + ".eval"
+	  printf("writing evaluation result to %s\n", outEvalFname)
+
+	  val evalWriter = new PrintWriter(new File(outEvalFname))
+
+	  evalWriter.printf("Among %d held out users, %d topics (%f) predicted correct.\n", int2Integer(numHeldOutUsers), int2Integer(predictedCorrect), double2Double(predictedCorrect.toDouble / numHeldOutUsers))
+
+	  evalWriter.printf("confusion matrix:\n");
+
+	  evalWriter.printf("%d", int2Integer(0))
+	  for (j <- 1 until numTopics) {
+	    evalWriter.printf("\t%d", int2Integer(j))
+	  }
+	  evalWriter.printf(" <-- predicted as\n")
+	  for (i <- 0 until numTopics) {
+            evalWriter.printf("%d", int2Integer(contingency(i)(0)))
+            for (j <- 1 until numTopics) {
+	      evalWriter.printf("\t%d", int2Integer(contingency(i)(j)))
+	    }
+	    evalWriter.printf("\t%d = %s", int2Integer(i), idxTopicMap.get(i).get)
+	    evalWriter.printf("\n")
+	  }
+
+	  evalWriter.close()
     
 	  fold = fold + 1
 	}
