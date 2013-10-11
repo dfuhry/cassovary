@@ -64,8 +64,7 @@ object LabelPropagationRunner {
 
     var dampenAmt = 0.05;
     while (dampenAmt <= 0.50) {
-      //var pageRankIters = 0;
-      var pageRankIters = 2;
+      var pageRankIters = 0;
       while (pageRankIters <= 8) {
 	var fold = 0
 	while (fold < NUM_FOLDS) {
