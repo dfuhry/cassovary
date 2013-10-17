@@ -22,6 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 class SynchronizedDynamicNode(val id: Int) extends DynamicNode {
   protected val inEdges = new ArrayBuffer[Int]
   protected val outEdges = new ArrayBuffer[Int]
+  val label = -1
   val DELETED_MARKER = 0
 
   /**

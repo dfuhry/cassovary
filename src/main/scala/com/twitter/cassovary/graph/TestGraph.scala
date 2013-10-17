@@ -46,16 +46,16 @@ case class TestGraph(nodes: Node*) extends DirectedGraph {
  * Some sample graphs for quick testing in tests.
  */
 object TestGraphs {
-  val g1 = TestGraph(TestNode(1, Nil, Nil))
+  val g1 = TestGraph(TestNode(1, -1, Nil, Nil))
 
   val g2_mutual = TestGraph(
-    TestNode(1, List(2), List(2)),
-    TestNode(2, List(1), List(1))
+    TestNode(1, -1, List(2), List(2)),
+    TestNode(2, -1, List(1), List(1))
     )
 
   val g2_nonmutual = TestGraph(
-    TestNode(1, List(2), Nil),
-    TestNode(2, Nil, List(1))
+    TestNode(1, -1, List(2), Nil),
+    TestNode(2, -1, Nil, List(1))
     )
 
   def g3 = ArrayBasedDirectedGraph( () => Seq(
@@ -80,7 +80,7 @@ object TestGraphs {
     val allNodes = (1 to numNodes).toList
     val testNodes = (1 to numNodes).toList map { source =>
       val allBut = allNodes.filter(_ != source)
-      TestNode(source, allBut, allBut)
+      TestNode(source, -1, allBut, allBut)
     }
     TestGraph(testNodes: _*)
   }

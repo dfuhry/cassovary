@@ -105,6 +105,7 @@ object SharedArrayBasedDirectedGraph {
     val nodeIdSet = new Array[Byte](maxNodeId + 1)
     val offsetTable = new Array[Int](maxNodeId + 1)
     val lengthTable = new Array[Int](maxNodeId + 1)
+    val labelTable = new Array[Int](maxNodeId + 1)
 
     // read everything second time
     log.info("loading nodes and out edges from file in parallel " +
@@ -127,6 +128,7 @@ object SharedArrayBasedDirectedGraph {
           Array.copy(item.edges, 0, sharedEdgeArray(shardIdx), offset, edgesLength)
           offsetTable(id) = offset
           lengthTable(id) = edgesLength
+	  labelTable(id) = item.label
           item.edges foreach { edge => nodeIdSet(edge) = 1 }
           val c = loadingCounter.addAndGet(1)
           if (c % outputMode == 0) {
@@ -224,7 +226,7 @@ object SharedArrayBasedDirectedGraph {
       Some(reverseEdges)
     } else None
 
-    new SharedArrayBasedDirectedGraph(nodeIdSet, offsetTable, lengthTable, sharedEdgeArray,
+    new SharedArrayBasedDirectedGraph(nodeIdSet, offsetTable, lengthTable, sharedEdgeArray, labelTable,
       reverseDirEdgeArray, maxNodeId, nodeWithOutEdgesMaxId, nodeWithOutEdgesCount,
       numNodes, numEdges, storedGraphDir)
   }
@@ -255,7 +257,7 @@ object SharedArrayBasedDirectedGraph {
  * @param storedGraphDir the graph direction(s) stored
  */
 class SharedArrayBasedDirectedGraph private (nodeIdSet: Array[Byte], offsetTable: Array[Int],
-    lengthTable: Array[Int], sharedEdgeArray: Array[Array[Int]],
+    lengthTable: Array[Int], sharedEdgeArray: Array[Array[Int]], labelTable: Array[Int],
     reverseDirEdgeArray: Option[Array[Array[Int]]], maxId: Int, val nodeWithOutEdgesMaxId: Int,
     val nodeWithOutEdgesCount: Int, val nodeCount: Int, val edgeCount: Long,
     val storedGraphDir: StoredGraphDir) extends DirectedGraph {
@@ -275,7 +277,7 @@ class SharedArrayBasedDirectedGraph private (nodeIdSet: Array[Byte], offsetTable
           else SharedArrayBasedDirectedGraph.emptyArray
       }
       Some(SharedArrayBasedDirectedNode(id, offsetTable(id), lengthTable(id),
-        sharedEdgeArray, storedGraphDir, Some(reverseEdges)))
+        labelTable(id), sharedEdgeArray, storedGraphDir, Some(reverseEdges)))
     }
   }
 }

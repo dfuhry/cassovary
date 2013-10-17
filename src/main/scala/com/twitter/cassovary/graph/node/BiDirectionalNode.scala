@@ -20,7 +20,7 @@ import com.twitter.cassovary.util.SharedArraySeq
  * Nodes in the graph that store both directions and
  * whose inEdges (and only inEdges) can be mutated after initialization
  */
-abstract class BiDirectionalNode private[graph] (val id: Int) extends Node {
+abstract class BiDirectionalNode private[graph] (val id: Int, val label: Int) extends Node {
   var inEdges: Array[Int] = BiDirectionalNode.noNodes
   def inboundNodes = inEdges
 }
@@ -28,8 +28,8 @@ abstract class BiDirectionalNode private[graph] (val id: Int) extends Node {
 object BiDirectionalNode {
   val noNodes = Array.empty[Int]
 
-  def apply(nodeId: Int, neighbors: Array[Int]) = {
-    new BiDirectionalNode(nodeId) {
+  def apply(nodeId: Int, neighbors: Array[Int], label: Int) = {
+    new BiDirectionalNode(nodeId, label) {
       def outboundNodes = neighbors
     }
   }
@@ -37,10 +37,11 @@ object BiDirectionalNode {
 
 object SharedArrayBasedBiDirectionalNode {
 
-  def apply(nodeId: Int, edgeArrOffset: Int, edgeArrLen: Int, sharedArray: Array[Array[Int]],
+  def apply(nodeId: Int, edgeArrOffset: Int, edgeArrLen: Int, nodeLabel: Int, sharedArray: Array[Array[Int]],
       reverseDirEdgeArray: Array[Int]) = {
     new Node {
       val id = nodeId
+      val label = nodeLabel
       def outboundNodes = new SharedArraySeq(nodeId, sharedArray, edgeArrOffset, edgeArrLen)
       def inboundNodes = reverseDirEdgeArray
     }

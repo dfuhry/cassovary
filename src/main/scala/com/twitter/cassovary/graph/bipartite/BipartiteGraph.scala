@@ -51,10 +51,11 @@ trait BipartiteNode extends Node {
  * @param in original (positive) ids of the nodes on the RHS pointed by in-coming edges
  * @param out original (positive) ids of the nodes on the RHS pointed by out-going edges
  */
-class LeftNode(nodeId: Int, val inboundNodes: Seq[Int],
+class LeftNode(nodeId: Int, nodeLabel: Int, val inboundNodes: Seq[Int],
     val outboundNodes: Seq[Int]) extends BipartiteNode {
   def isLeftNode = true
   val id = nodeId
+  val label = nodeLabel
 }
 
 /**
@@ -65,8 +66,9 @@ class LeftNode(nodeId: Int, val inboundNodes: Seq[Int],
  * @param in original (positive) ids of the nodes on the LHS pointed by in-coming edges
  * @param out original (positive) ids of the nodes on the LHS pointed by out-going edges
  */
-class RightNode(val id: Int, in: Array[Int], out: Array[Int]) extends BipartiteNode {
+class RightNode(val id: Int, nodeLabel: Int, in: Array[Int], out: Array[Int]) extends BipartiteNode {
   def isLeftNode = false
+  val label = nodeLabel
   val inboundNodes = {
     for (i <- 0 until in.length) {
       if (in(i) == 0) throw new BipartiteGraphException(

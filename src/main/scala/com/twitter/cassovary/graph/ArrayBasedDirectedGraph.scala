@@ -28,10 +28,10 @@ import scala.collection.mutable
  * This case class holds a node's id, all its out edges, and the max
  * id of itself and ids of nodes in its out edges
  */
-case class NodeIdEdgesMaxId(var id: Int, var edges: Array[Int], var maxId: Int)
+case class NodeIdEdgesMaxId(var id: Int, var edges: Array[Int], var maxId: Int, var label: Int)
 object NodeIdEdgesMaxId {
   def apply(id: Int, edges: Array[Int]) =
-      new NodeIdEdgesMaxId(id, edges, edges.foldLeft[Int](id)((x, y) => x max y))
+      new NodeIdEdgesMaxId(id, edges, edges.foldLeft[Int](id)((x, y) => x max y), -1)
 }
 
 /**
@@ -81,6 +81,7 @@ object ArrayBasedDirectedGraph {
         var id = 0
         var edgesLength = 0
         var edges: Array[Int] = Array.empty[Int]
+	var label = -1
 
         val iterator = iteratorFunc()
         iterator foreach { item =>
@@ -89,7 +90,8 @@ object ArrayBasedDirectedGraph {
           varNodeWithOutEdgesMaxId = varNodeWithOutEdgesMaxId max item.id
           val edges = item.edges
           edgesLength = edges.length
-          val newNode = ArrayBasedDirectedNode(id, edges, storedGraphDir)
+	  label = item.label
+          val newNode = ArrayBasedDirectedNode(id, edges, label, storedGraphDir)
           nodes += newNode
         }
         NodesMaxIds(nodes, newMaxId, varNodeWithOutEdgesMaxId)
@@ -140,7 +142,7 @@ object ArrayBasedDirectedGraph {
         if (nodeIdSet(id) == 1) {
           numNodes += 1
           if (table(id) == null) {
-            val node = ArrayBasedDirectedNode(id, ArrayBasedDirectedNode.noNodes, storedGraphDir)
+            val node = ArrayBasedDirectedNode(id, ArrayBasedDirectedNode.noNodes, -1, storedGraphDir)
             table(id) = node
             if (storedGraphDir == StoredGraphDir.BothInOut)
               nodesWithNoOutEdges += node

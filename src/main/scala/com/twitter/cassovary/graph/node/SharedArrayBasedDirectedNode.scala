@@ -26,13 +26,13 @@ object SharedArrayBasedDirectedNode {
    *
    * @return a node
    */
-  def apply(nodeId: Int, edgeArrOffset: Int, edgeArrLen: Int, sharedEdgeArray: Array[Array[Int]],
+  def apply(nodeId: Int, edgeArrOffset: Int, edgeArrLen: Int, label: Int, sharedEdgeArray: Array[Array[Int]],
       dir: StoredGraphDir, reverseDirEdges: Option[Array[Int]] = None) = {
     dir match {
       case StoredGraphDir.OnlyIn | StoredGraphDir.OnlyOut | StoredGraphDir.Mutual =>
-        SharedArrayBasedUniDirectionalNode(nodeId, edgeArrOffset, edgeArrLen, sharedEdgeArray, dir)
+        SharedArrayBasedUniDirectionalNode(nodeId, edgeArrOffset, edgeArrLen, label, sharedEdgeArray, dir)
       case StoredGraphDir.BothInOut =>
-        SharedArrayBasedBiDirectionalNode(nodeId, edgeArrOffset, edgeArrLen,
+        SharedArrayBasedBiDirectionalNode(nodeId, edgeArrOffset, edgeArrLen, label,
             sharedEdgeArray, reverseDirEdges.get)
     }
   }
