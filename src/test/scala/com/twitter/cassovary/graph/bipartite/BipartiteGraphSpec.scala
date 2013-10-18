@@ -40,49 +40,49 @@ class BipartiteGraphSpec extends Specification {
 
     var inBounds: Array[Int] = Array()
     var outBounds: Array[Int] = Array()
-    createLeftNode(1, inBounds, outBounds)
+    createLeftNode(1, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array(5, 10)
-    createLeftNode(2, inBounds, outBounds)
+    createLeftNode(2, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array()
-    createLeftNode(3, inBounds, outBounds)
+    createLeftNode(3, -1, inBounds, outBounds)
 
 
     inBounds = Array()
     outBounds = Array(14)
-    createLeftNode(4, inBounds, outBounds)
+    createLeftNode(4, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array(5, 10, 8)
-    createLeftNode(5, inBounds, outBounds)
+    createLeftNode(5, -1, inBounds, outBounds)
 
     rightNodes = new Array[BipartiteNode](124)
     inBounds = Array(4)
     outBounds = Array()
-    createRightNode(14, inBounds, outBounds)
+    createRightNode(14, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array()
-    createRightNode(4, inBounds, outBounds)
+    createRightNode(4, -1, inBounds, outBounds)
 
     inBounds = Array(2, 5)
     outBounds = Array()
-    createRightNode(5, inBounds, outBounds)
+    createRightNode(5, -1, inBounds, outBounds)
 
     inBounds = Array(5)
     outBounds = Array()
-    createRightNode(8, inBounds, outBounds)
+    createRightNode(8, -1, inBounds, outBounds)
 
     inBounds = Array(2, 5)
     outBounds = Array()
-    createRightNode(10, inBounds, outBounds)
+    createRightNode(10, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array()
-    createRightNode(123, inBounds, outBounds)
+    createRightNode(123, -1, inBounds, outBounds)
 
     val leftSide = BipartiteSide(leftNodes, 5, 6)
     val rightSide = BipartiteSide(rightNodes, 6, 0)
@@ -105,49 +105,49 @@ class BipartiteGraphSpec extends Specification {
 
     var inBounds: Array[Int] = Array(4, 5, 123, 10)
     var outBounds: Array[Int] = Array()
-    createLeftNode(1, inBounds, outBounds)
+    createLeftNode(1, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array(5, 10)
-    createLeftNode(2, inBounds, outBounds)
+    createLeftNode(2, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array()
-    createLeftNode(3, inBounds, outBounds)
+    createLeftNode(3, -1, inBounds, outBounds)
 
 
     inBounds = Array(14)
     outBounds = Array(14)
-    createLeftNode(4, inBounds, outBounds)
+    createLeftNode(4, -1, inBounds, outBounds)
 
     inBounds = Array(4, 10)
     outBounds = Array(5, 10, 8)
-    createLeftNode(5, inBounds, outBounds)
+    createLeftNode(5, -1, inBounds, outBounds)
 
     rightNodes = new Array[BipartiteNode](124)
     inBounds = Array(4)
     outBounds = Array(4)
-    createRightNode(14, inBounds, outBounds)
+    createRightNode(14, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array(1, 5)
-    createRightNode(4, inBounds, outBounds)
+    createRightNode(4, -1, inBounds, outBounds)
 
     inBounds = Array(2, 5)
     outBounds = Array(1)
-    createRightNode(5, inBounds, outBounds)
+    createRightNode(5, -1, inBounds, outBounds)
 
     inBounds = Array(5)
     outBounds = Array()
-    createRightNode(8, inBounds, outBounds)
+    createRightNode(8, -1, inBounds, outBounds)
 
     inBounds = Array(2, 5)
     outBounds = Array(1, 5)
-    createRightNode(10, inBounds, outBounds)
+    createRightNode(10, -1, inBounds, outBounds)
 
     inBounds = Array()
     outBounds = Array(1)
-    createRightNode(123, inBounds, outBounds)
+    createRightNode(123, -1, inBounds, outBounds)
 
     val leftSide = BipartiteSide(leftNodes, 5, 6)
     val rightSide = BipartiteSide(rightNodes, 6, 7)
@@ -247,13 +247,13 @@ class BipartiteGraphSpec extends Specification {
     }
   }
 
-  private def createLeftNode(id: Int, inNodes: Array[Int], outNodes: Array[Int]) {
-    val node = new LeftNode(id, inNodes, outNodes)
+  private def createLeftNode(id: Int, label: Int, inNodes: Array[Int], outNodes: Array[Int]) {
+    val node = new LeftNode(id, label, inNodes, outNodes)
     leftNodes(id) = node
   }
 
-  private def createRightNode(id: Int, inNodes: Array[Int], outNodes: Array[Int]) {
-    val node = new RightNode(id, inNodes, outNodes)
+  private def createRightNode(id: Int, label: Int, inNodes: Array[Int], outNodes: Array[Int]) {
+    val node = new RightNode(id, label, inNodes, outNodes)
     rightNodes(id) = node
   }
 }

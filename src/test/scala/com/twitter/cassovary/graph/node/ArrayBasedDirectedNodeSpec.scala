@@ -24,27 +24,32 @@ class ArrayBasedDirectedNodeSpec extends Specification {
   var mutualNode: Node = _
   var bothNode: Node = _
   val nodeId = 100
+  val nodeLabel = -1
   val neighbors = Array(1,2,3)
   val inEdges = Array(4,5)
 
   val small = beforeContext {
     onlyInNode = new Node {
       val id = nodeId
+      val label = nodeLabel
       def inboundNodes = neighbors
       val outboundNodes = Nil
     }
     onlyOutNode = new Node {
       val id = nodeId
+      val label = nodeLabel
       def outboundNodes = neighbors
       val inboundNodes = Nil
     }
     mutualNode = new Node {
       val id = nodeId
+      val label = nodeLabel
       def inboundNodes = neighbors
       def outboundNodes = neighbors
     }
     bothNode = new Node {
       val id = nodeId
+      val label = nodeLabel
       def inboundNodes = inEdges
       def outboundNodes = neighbors
     }
@@ -53,16 +58,16 @@ class ArrayBasedDirectedNodeSpec extends Specification {
   "array based directed node" definedAs small should {
 
     "constructs uni-directional nodes correctly" in {
-      ArrayBasedDirectedNode(nodeId, neighbors, StoredGraphDir.OnlyIn) must
+      ArrayBasedDirectedNode(nodeId, nodeLabel, neighbors, StoredGraphDir.OnlyIn) must
           DeepEqualsNode(onlyInNode)
-      ArrayBasedDirectedNode(nodeId, neighbors, StoredGraphDir.OnlyOut) must
+      ArrayBasedDirectedNode(nodeId, nodeLabel, neighbors, StoredGraphDir.OnlyOut) must
           DeepEqualsNode(onlyOutNode)
-      ArrayBasedDirectedNode(nodeId, neighbors, StoredGraphDir.Mutual) must
+      ArrayBasedDirectedNode(nodeId, nodeLabel, neighbors, StoredGraphDir.Mutual) must
          DeepEqualsNode(mutualNode)
     }
 
     "constructs bi-directional nodes correctly" in {
-      val node = ArrayBasedDirectedNode(nodeId, neighbors, StoredGraphDir.BothInOut)
+      val node = ArrayBasedDirectedNode(nodeId, nodeLabel, neighbors, StoredGraphDir.BothInOut)
       node.asInstanceOf[BiDirectionalNode].inEdges = inEdges
       node must DeepEqualsNode(bothNode)
     }

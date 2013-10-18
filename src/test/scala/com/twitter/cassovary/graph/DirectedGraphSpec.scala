@@ -41,8 +41,8 @@ class DirectedGraphSpec extends Specification {
     }
 
     "getNodeById should work in both positive and negative cases" in {
-      graph.getNodeById(1) mustEqual Some(TestNode(1, List(2), List(2)))
-      graph.getNodeById(2) mustEqual Some(TestNode(2, List(1), List(1)))
+      graph.getNodeById(1) mustEqual Some(TestNode(1, -1, List(2), List(2)))
+      graph.getNodeById(2) mustEqual Some(TestNode(2, -1, List(1), List(1)))
       graph.getNodeById(3) mustEqual None
     }
   }

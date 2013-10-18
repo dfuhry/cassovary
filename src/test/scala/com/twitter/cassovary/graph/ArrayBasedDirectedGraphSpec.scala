@@ -60,21 +60,25 @@ object NodeMaker {
     val node = storedGraphDir match {
       case StoredGraphDir.OnlyIn => new Node {
         val id = nodeId
+	val label = -1
         def inboundNodes = out
         def outboundNodes = Nil
       }
       case StoredGraphDir.OnlyOut => new Node {
         val id = nodeId
+	val label = -1
         def inboundNodes = Nil
         def outboundNodes = out
       }
       case StoredGraphDir.Mutual => new Node {
         val id = nodeId
+	val label = -1
         def inboundNodes = out
         def outboundNodes = out
       }
       case StoredGraphDir.BothInOut => new Node {
         val id = nodeId
+	val label = -1
         def inboundNodes = in
         def outboundNodes = out
       }

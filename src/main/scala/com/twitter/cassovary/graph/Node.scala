@@ -26,6 +26,8 @@ trait Node {
    */
   val id: Int
 
+  val label: Int
+
   /**
    * Returns ids of all nodes pointing to this node.
    */
@@ -264,6 +266,7 @@ trait Node {
    */
    override def toString  = {
      "NodeId => " + id + "\n" +
+     "label " + label + "\n" +
      inboundNodes.take(10).foldLeft("InboundNodes[" + inboundCount + "] =>") { (accum, node) =>
        accum + node + "|"} + "\n" +
      outboundNodes.take(10).foldLeft("OutboundNodes[" + outboundCount + "] =>"){ (accum, node) =>

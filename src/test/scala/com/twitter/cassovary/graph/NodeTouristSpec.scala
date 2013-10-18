@@ -21,7 +21,7 @@ import org.specs.Specification
 
 class NodeTouristSpec extends Specification {
 
-  def testNode(id: Int) = TestNode(id, Nil, Nil)
+  def testNode(id: Int) = TestNode(id, -1, Nil, Nil)
 
   "visitscounter" should {
     "count visits properly" in {

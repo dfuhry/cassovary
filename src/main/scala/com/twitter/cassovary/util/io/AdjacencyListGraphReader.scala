@@ -13,11 +13,12 @@
  */
 package com.twitter.cassovary.util.io
 
+import com.twitter.cassovary.graph.ArrayBasedDirectedGraph
 import com.twitter.cassovary.graph.NodeIdEdgesMaxId
+import com.twitter.cassovary.graph.node.ArrayBasedDirectedNode
 import java.io.File
 import scala.io.Source
-import scala.collection.mutable.Map;
-import scala.collection.mutable.SynchronizedMap;
+import scala.collection.mutable.{Map,SynchronizedMap,HashMap}
 
 /**
  * Reads in a multi-line adjacency list from multiple files in a directory.
@@ -45,11 +46,16 @@ import scala.collection.mutable.SynchronizedMap;
  */
 class AdjacencyListGraphReader (directory: String, prefixFileNames: String = "") extends GraphReader {
 
+  val nodeIdToNodeIdx = new HashMap[Int,Int] with SynchronizedMap[Int,Int]
+  val labelIdToLabelIdx = new HashMap[String,Int] with SynchronizedMap[String,Int]
+  val nodeIdxToNodeId = new HashMap[Int,Int]
+  val labelIdxToLabelId = new HashMap[Int,String]
+
   /**
    * Read in nodes and edges from a single file
    * @param filename Name of file to read from
    */
-  class OneShardReader(filename: String, nodeIdxMap: SynchronizedMap, labelIdxMap: SynchronizedMap) extends Iterator[NodeIdEdgesMaxId] {
+  class OneShardReader(filename: String, nodeIdToNodeIdx: SynchronizedMap[Int,Int], labelIdToLabelIdx: SynchronizedMap[String,Int]) extends Iterator[NodeIdEdgesMaxId] {
 
     private val outEdgePattern = """^(\d+)\s+(\d+)(?:\s+\"(.*)\")?""".r
     private val lines = Source.fromFile(filename).getLines()
@@ -62,20 +68,20 @@ class AdjacencyListGraphReader (directory: String, prefixFileNames: String = "")
       var i = 0
       val outEdgeCountInt = outEdgeCount.toInt
 
-      val idInt = nodeIdxMap.getOrElseUpdate(id.toInt, nodeIdxMap.size)
+      val idInt = nodeIdToNodeIdx.getOrElseUpdate(id.toInt, nodeIdToNodeIdx.size)
 
       var newMaxId = idInt
       val outEdgesArr = new Array[Int](outEdgeCountInt)
       while (i < outEdgeCountInt) {
         val edgeId = lines.next.trim.toInt
 
-        val edgeInt = nodeIdxMap.getOrElseUpdate(edgeId.toInt, nodeIdxMap.size)
+        val edgeInt = nodeIdToNodeIdx.getOrElseUpdate(edgeId.toInt, nodeIdToNodeIdx.size)
 
         newMaxId = newMaxId max edgeInt
         outEdgesArr(i) = edgeInt
         i += 1
       }
-      val labelIdx = labelIdxMap.getOrElseUpdate(labelStr, labelIdxMap.size)
+      val labelIdx = labelIdToLabelIdx.getOrElseUpdate(labelStr, labelIdToLabelIdx.size)
 
       holder.id = idInt
       holder.edges = outEdgesArr
@@ -91,7 +97,7 @@ class AdjacencyListGraphReader (directory: String, prefixFileNames: String = "")
    * @param directory Directory to read from
    * @param prefixFileNames the string that each part file starts with
    */
-  class ShardsReader(directory: String, prefixFileNames: String = "") {
+  class ShardsReader(directory: String, prefixFileNames: String = "", nodeIdToNodeIdx: SynchronizedMap[Int,Int], labelIdToLabelIdx: SynchronizedMap[String,Int]) {
     val dir = new File(directory)
 
     def readers: Seq[() => Iterator[NodeIdEdgesMaxId]] = {
@@ -103,16 +109,41 @@ class AdjacencyListGraphReader (directory: String, prefixFileNames: String = "")
           None
         }
       })
-      val nodeIdxMap = SynchronizedMap[Int,Int]()
-      val labelIdxMap = SynchronizedMap[String,Int]()
       validFiles.map({ filename =>
-      {() => new OneShardReader(directory + "/" + filename, nodeIdxMap, labelIdxMap)}
+      {() => new OneShardReader(directory + "/" + filename, nodeIdToNodeIdx, labelIdToLabelIdx)}
       }).toSeq
     }
   }
 
   def iteratorSeq = {
-    new ShardsReader(directory, prefixFileNames).readers
+    new ShardsReader(directory, prefixFileNames, nodeIdToNodeIdx, labelIdToLabelIdx).readers
   }
+
+  /**
+   * Returns original vertex identifier given (remapped) vertex index.
+   * Builds reverse map if not already built.
+   */
+  def vertexIdxToVertexId(nodeIdx: Int): Int = {
+    if (nodeIdxToNodeId.isEmpty) {
+      (nodeIdxToNodeId /: nodeIdToNodeIdx.map{ case (nodeId, nodeIdx) => (nodeIdx, nodeId) })(_ += _)
+    }
+    nodeIdxToNodeId(nodeIdx)
+  }
+
+  def labelIdxToLabelId(labelIdx: Int): Int = {
+    if (labelIdxToLabelId.isEmpty) {
+      (labelIdxToLabelId /: labelIdToLabelIdx.map{ case (labelId, labelIdx) => (labelIdx, labelId) })(_ += _)
+    }
+    labelIdxToLabelId(labelIdx)
+  }
+
+  /*
+  def unRenumberedGraph(graph: ArrayBasedDirectedGraph): Int = {
+    // graph.toList.foreach{ node => node.id = labelIdxToLabelId(node.id) }
+    val unRenumberedNodes = graph.toList.view.map{ node => ArrayBasedDirectedNode(labelIdxToLabelId(node.id), node.label, node.neighbors, node.dir) }
+    val executorService = MoreExecutors.sameThreadExecutor()
+    ArrayBasedDirectedGraph(List(unRenumberedNodes), executorService, graph.storedGraphDir)
+  }
+  */
 
 }

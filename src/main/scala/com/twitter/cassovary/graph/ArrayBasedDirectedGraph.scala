@@ -91,7 +91,7 @@ object ArrayBasedDirectedGraph {
           val edges = item.edges
           edgesLength = edges.length
 	  label = item.label
-          val newNode = ArrayBasedDirectedNode(id, edges, label, storedGraphDir)
+          val newNode = ArrayBasedDirectedNode(id, label, edges, storedGraphDir)
           nodes += newNode
         }
         NodesMaxIds(nodes, newMaxId, varNodeWithOutEdgesMaxId)
@@ -142,7 +142,7 @@ object ArrayBasedDirectedGraph {
         if (nodeIdSet(id) == 1) {
           numNodes += 1
           if (table(id) == null) {
-            val node = ArrayBasedDirectedNode(id, ArrayBasedDirectedNode.noNodes, -1, storedGraphDir)
+            val node = ArrayBasedDirectedNode(id, -1, ArrayBasedDirectedNode.noNodes, storedGraphDir)
             table(id) = node
             if (storedGraphDir == StoredGraphDir.BothInOut)
               nodesWithNoOutEdges += node

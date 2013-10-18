@@ -31,21 +31,25 @@ class SharedArrayBasedDirectedNodeSpec extends Specification {
   val small = beforeContext {
     onlyInNode = new Node {
       val id = nodeId
+      val label = -1
       def inboundNodes = neighbors
       val outboundNodes = Nil
     }
     onlyOutNode = new Node {
       val id = nodeId
+      val label = -1
       def outboundNodes = neighbors
       val inboundNodes = Nil
     }
     mutualNode = new Node {
       val id = nodeId
+      val label = -1
       def inboundNodes = neighbors
       def outboundNodes = neighbors
     }
     bothNode = new Node {
       val id = nodeId
+      val label = -1
       def inboundNodes = inEdges
       def outboundNodes = neighbors
     }
@@ -54,16 +58,16 @@ class SharedArrayBasedDirectedNodeSpec extends Specification {
   "array based directed node" definedAs small should {
 
     "constructs uni-directional nodes correctly" in {
-      SharedArrayBasedDirectedNode(nodeId, 0, 3, sharedArray,
+      SharedArrayBasedDirectedNode(nodeId, 0, 3, -1, sharedArray,
           StoredGraphDir.OnlyIn) must DeepEqualsNode(onlyInNode)
-      SharedArrayBasedDirectedNode(nodeId, 0, 3, sharedArray,
+      SharedArrayBasedDirectedNode(nodeId, 0, 3, -1, sharedArray,
           StoredGraphDir.OnlyOut) must DeepEqualsNode(onlyOutNode)
-      SharedArrayBasedDirectedNode(nodeId, 0, 3, sharedArray,
+      SharedArrayBasedDirectedNode(nodeId, 0, 3, -1, sharedArray,
           StoredGraphDir.Mutual) must DeepEqualsNode(mutualNode)
     }
 
     "constructs bi-directional nodes correctly" in {
-      val node = SharedArrayBasedDirectedNode(nodeId, 0, 3, sharedArray,
+      val node = SharedArrayBasedDirectedNode(nodeId, 0, 3, -1, sharedArray,
           StoredGraphDir.BothInOut, Some(inEdges))
       node must DeepEqualsNode(bothNode)
     }

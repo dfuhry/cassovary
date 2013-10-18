@@ -19,10 +19,10 @@ class NodeSpec extends Specification {
 
   var node: Node = _
 
-  val noInboundOrOutboundEdges = beforeContext(node = TestNode(1, Nil, Nil))
-  val onlyInboundEdges = beforeContext(node = TestNode(1, List(2), Nil))
-  val onlyOutboundEdges = beforeContext(node = TestNode(1, Nil, List(2)))
-  val inboundAndOutboundEdges = beforeContext(node = TestNode(1, List(2), List(3)))
+  val noInboundOrOutboundEdges = beforeContext(node = TestNode(1, -1, Nil, Nil))
+  val onlyInboundEdges = beforeContext(node = TestNode(1, -1, List(2), Nil))
+  val onlyOutboundEdges = beforeContext(node = TestNode(1, -1, Nil, List(2)))
+  val inboundAndOutboundEdges = beforeContext(node = TestNode(1, -1, List(2), List(3)))
 
   def noInboundEdges = {
     "have no inbound edges" in {

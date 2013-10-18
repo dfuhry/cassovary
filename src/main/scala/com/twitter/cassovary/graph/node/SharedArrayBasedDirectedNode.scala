@@ -20,6 +20,7 @@ object SharedArrayBasedDirectedNode {
   /**
    * creates an array based directed node (uni-directional or bi-directional)
    * @param nodeId an id of the node
+   * @param label label of the node
    * @param neighbors a seq of ids of the neighbors read from file
    * @param sharedArray a two-dimensional array that stores the shared edges of all nodes
    * @param dir the stored graph direction (OnlyIn, OnlyOut, BothInOut or Mutual)

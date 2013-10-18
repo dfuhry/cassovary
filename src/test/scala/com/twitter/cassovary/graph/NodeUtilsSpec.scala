@@ -21,7 +21,7 @@ class NodeUtilsSpec extends Specification {
   var node: Node = _
 
   val small = beforeContext {
-    node = TestNode(100, List(1,2,3), List(60, 70))
+    node = TestNode(100, -1, List(1,2,3), List(60, 70))
   }
 
   "A node with 3 inEdges and 2 outEdges" definedAs small should {
@@ -39,14 +39,14 @@ class NodeUtilsSpec extends Specification {
       NodeUtils.removeSelfAndNodesDirectlyFollowing(node,
           List(0), (i: Int) => i) mustEqual List(0)
       val mixedListNodes = List(
-          (60, TestNode(60, Nil, Nil)),
-          (70, TestNode(70, Nil, Nil)),
-          (80, TestNode(80, Nil, Nil)),
+          (60, TestNode(60, -1, Nil, Nil)),
+          (70, TestNode(70, -1, Nil, Nil)),
+          (80, TestNode(80, -1, Nil, Nil)),
           (90, node)
         )
       NodeUtils.removeSelfAndNodesDirectlyFollowing(node,
           mixedListNodes, (x: (Int, Node)) => x._1) mustEqual
-          List((80, TestNode(80, Nil, Nil)),(90, node))
+          List((80, TestNode(80, -1, Nil, Nil)),(90, node))
     }
 
     "remove ids from a list" in {
