@@ -3,7 +3,8 @@
 # Exit on any error.
 set -e
 
-INPUT_GRAPH_FNAME="/Users/dfuhry/gssl/kfu-7-percentile33/edges.txt"
+#INPUT_GRAPH_FNAME="/Users/dfuhry/gssl/kfu-7-percentile66/edges.txt"
+INPUT_GRAPH_FNAME="/Users/dfuhry/gssl/kfu-7-lspar_sqrt/edges.txt"
 UID_SN_FNAME="/Users/dfuhry/gssl/dfuhry_kfu_users_ids"
 
 examples/scala/label_propagation.sh 0.1 1 $INPUT_GRAPH_FNAME $UID_SN_FNAME
