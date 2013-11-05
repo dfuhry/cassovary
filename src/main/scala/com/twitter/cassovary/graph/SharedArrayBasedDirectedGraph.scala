@@ -109,9 +109,9 @@ object SharedArrayBasedDirectedGraph {
     val lengthTable = new Array[Int](maxNodeId + 1)
     val labelTable = { 
       if (labeled) {
-        new Array[Int](maxNodeId + 1)
+        new Array[NodeLabel](maxNodeId + 1)
       } else {
-        Array.empty[Int]
+        Array.empty[NodeLabel]
       }
     }
 
@@ -269,7 +269,7 @@ object SharedArrayBasedDirectedGraph {
  * @param edgeCount the number of edges in the graph
  * @param storedGraphDir the graph direction(s) stored
  */
-class SharedArrayBasedDirectedGraph private (nodeIdSet: Array[Byte], labelTable: Array[Int],
+class SharedArrayBasedDirectedGraph private (nodeIdSet: Array[Byte], labelTable: Array[NodeLabel],
     offsetTable: Array[Int], lengthTable: Array[Int], sharedEdgeArray: Array[Array[Int]],
     reverseDirEdgeArray: Option[Array[Array[Int]]], maxId: Int, val nodeWithOutEdgesMaxId: Int,
     val nodeWithOutEdgesCount: Int, val nodeCount: Int, val edgeCount: Long,

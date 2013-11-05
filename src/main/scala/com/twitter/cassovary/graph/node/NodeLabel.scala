@@ -11,24 +11,8 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package com.twitter.cassovary.graph
+package com.twitter.cassovary.graph.node
 
-import scala.util.Random
-import com.twitter.cassovary.graph.node.NodeLabel
-
-/**
- *   Represents a labeled node in a directed graph.
- */
-trait LabeledNode extends Node {
-  import GraphDir._
-
-  /**
-   * The label for this node.
-   */
-  val label: NodeLabel
-
-}
-
-object LabeledNode {
+trait NodeLabel {
 
 }

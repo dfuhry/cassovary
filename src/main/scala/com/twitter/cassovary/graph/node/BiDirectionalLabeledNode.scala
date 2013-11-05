@@ -21,7 +21,7 @@ import com.twitter.cassovary.graph.LabeledNode
  * Nodes in the graph that store both directions and
  * whose inEdges (and only inEdges) can be mutated after initialization
  */
-abstract class BiDirectionalLabeledNode private[graph] (val id: Int, val label: Int) extends LabeledNode {
+abstract class BiDirectionalLabeledNode private[graph] (val id: Int, val label: NodeLabel) extends LabeledNode {
   var inEdges: Array[Int] = BiDirectionalNode.noNodes
   def inboundNodes = inEdges
 }
@@ -29,7 +29,7 @@ abstract class BiDirectionalLabeledNode private[graph] (val id: Int, val label: 
 object BiDirectionalLabeledNode {
   val noNodes = Array.empty[Int]
 
-  def apply(nodeId: Int, label: Int, neighbors: Array[Int]) = {
+  def apply(nodeId: Int, label: NodeLabel, neighbors: Array[Int]) = {
     new BiDirectionalLabeledNode(nodeId, label) {
       def outboundNodes = neighbors
     }
@@ -38,7 +38,7 @@ object BiDirectionalLabeledNode {
 
 object SharedArrayBasedBiDirectionalLabeledNode {
 
-  def apply(nodeId: Int, labelId: Int, edgeArrOffset: Int, edgeArrLen: Int, sharedArray: Array[Array[Int]],
+  def apply(nodeId: Int, labelId: NodeLabel, edgeArrOffset: Int, edgeArrLen: Int, sharedArray: Array[Array[Int]],
       reverseDirEdgeArray: Array[Int]) = {
     new LabeledNode {
       val id = nodeId

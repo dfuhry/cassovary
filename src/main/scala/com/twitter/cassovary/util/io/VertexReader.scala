@@ -38,36 +38,22 @@ class SimpleVertexReader(override val nodeRenumberer: NodeRenumberer) extends Ve
 }
 
 
-class LabeledVertexReader(override val nodeRenumberer: NodeRenumberer) extends VertexReader(nodeRenumberer) {
-  val _holder: LabeledNodeIdEdgesMaxId = LabeledNodeIdEdgesMaxId(-1, null, -1, -1)
+class LabeledVertexReader(override val nodeRenumberer: NodeRenumberer, val nodeLabelParser: NodeLabelParser) extends VertexReader(nodeRenumberer) {
+  val _holder: LabeledNodeIdEdgesMaxId = LabeledNodeIdEdgesMaxId(-1, null, -1, null)
   val outEdgePattern: Regex = """^(\d+)\s+(\d+)(?:\s+\"(.*)\")?""".r
-  val labelIdToLabelIdx = new HashMap[String,Int] with SynchronizedMap[String,Int]
-  var lazyLabelIdxToLabelId: Array[String] = Array[String]()
 
 
   def vertexLineToHolder(line: String) = {
     val outEdgePattern(id, outEdgeCount, labelStr) = line
     _holder.id = nodeRenumberer.nodeIdToNodeIdx(id.toInt)
-    _holder.label = -1
+    _holder.label = null
     if (labelStr != null) {
-      _holder.label = labelIdToLabelIdx.getOrElseUpdate(labelStr, labelIdToLabelIdx.size)
+      _holder.label = nodeLabelParser.parseLabelStr(labelStr)
     }
     val outEdgeCountInt = outEdgeCount.toInt
     _holder.edges = new Array[Int](outEdgeCountInt)
     _holder.maxId = -1
     _holder
-  }
-
-  /**
-   * Returns original label string given label index.
-   * Builds reverse map if not already built.
-   */
-  def labelIdxToLabelId(labelIdx: Int): String = {
-    if (lazyLabelIdxToLabelId.isEmpty) {
-      lazyLabelIdxToLabelId = new Array[String](labelIdToLabelIdx.size)
-      labelIdToLabelIdx.foreach { case (labelId, labelIdx) => lazyLabelIdxToLabelId(labelIdx) = labelId }
-    }
-    lazyLabelIdxToLabelId(labelIdx)
   }
 
 }
@@ -83,9 +69,9 @@ class SimpleVertexReaderFactory extends VertexReaderFactory {
   }
 }
 
-class LabeledVertexReaderFactory extends VertexReaderFactory {
+class LabeledVertexReaderFactory (val nodeLabelParser: NodeLabelParser) extends VertexReaderFactory {
   def newInstance(nodeRenumberer: NodeRenumberer) = {
-    new LabeledVertexReader(nodeRenumberer)  
+    new LabeledVertexReader(nodeRenumberer, nodeLabelParser)  
   }
 }
 

@@ -22,7 +22,7 @@ import com.twitter.cassovary.graph.LabeledNode
  * Nodes in the graph that store edges in only one direction (or in the case Mutual Dir graph,
  * both directions have the same edges). Also the edges stored can not be mutated
  */
-abstract class UniDirectionalLabeledNode private[graph] (val id: Int, val label: Int) extends LabeledNode
+abstract class UniDirectionalLabeledNode private[graph] (val id: Int, val label: NodeLabel) extends LabeledNode
 
 /**
  * Factory object for creating uni-directional labeled nodes that uses array as
@@ -30,7 +30,7 @@ abstract class UniDirectionalLabeledNode private[graph] (val id: Int, val label:
  */
 object UniDirectionalLabeledNode {
 
-  def apply(nodeId: Int, label: Int, neighbors: Array[Int], dir: StoredGraphDir) = {
+  def apply(nodeId: Int, label: NodeLabel, neighbors: Array[Int], dir: StoredGraphDir) = {
     dir match {
       case StoredGraphDir.OnlyIn =>
         new UniDirectionalLabeledNode(nodeId, label) {
@@ -58,7 +58,7 @@ object UniDirectionalLabeledNode {
  */
 object SharedArrayBasedUniDirectionalLabeledNode {
 
-  def apply(nodeId: Int, label: Int, edgeArrOffset: Int, edgeArrLen: Int, sharedArray: Array[Array[Int]],
+  def apply(nodeId: Int, label: NodeLabel, edgeArrOffset: Int, edgeArrLen: Int, sharedArray: Array[Array[Int]],
       dir: StoredGraphDir) = {
     dir match {
       case StoredGraphDir.OnlyIn =>

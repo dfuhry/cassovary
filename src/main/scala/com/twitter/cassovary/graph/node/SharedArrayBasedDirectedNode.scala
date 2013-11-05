@@ -49,7 +49,7 @@ object SharedArrayBasedDirectedLabeledNode {
    *
    * @return a node
    */
-  def apply(nodeId: Int, label: Int, edgeArrOffset: Int, edgeArrLen: Int, sharedEdgeArray: Array[Array[Int]],
+  def apply(nodeId: Int, label: NodeLabel, edgeArrOffset: Int, edgeArrLen: Int, sharedEdgeArray: Array[Array[Int]],
       dir: StoredGraphDir, reverseDirEdges: Option[Array[Int]] = None) = {
     dir match {
       case StoredGraphDir.OnlyIn | StoredGraphDir.OnlyOut | StoredGraphDir.Mutual =>

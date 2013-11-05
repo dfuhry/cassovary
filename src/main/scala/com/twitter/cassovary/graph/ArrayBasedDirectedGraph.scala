@@ -48,13 +48,13 @@ object NodeIdEdgesMaxId {
  * This case class holds a node's id, its out edges, max and its out edges,
  * and an integer value specifying a label.
  */
-case class LabeledNodeIdEdgesMaxId(var id: Int, var edges: Array[Int], var maxId: Int, var label: Int) extends NodeIdEdgesMaxIdTrait {
+case class LabeledNodeIdEdgesMaxId(var id: Int, var edges: Array[Int], var maxId: Int, var label: NodeLabel) extends NodeIdEdgesMaxIdTrait {
   def isLabeled = {
     true
   }
 }
 object LabeledNodeIdEdgesMaxId {
-  def apply(id: Int, edges: Array[Int], label: Int) =
+  def apply(id: Int, edges: Array[Int], label: NodeLabel) =
       new LabeledNodeIdEdgesMaxId(id, edges, edges.foldLeft[Int](id)((x, y) => x max y), label)
 }
 
