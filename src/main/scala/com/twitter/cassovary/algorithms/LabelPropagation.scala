@@ -15,7 +15,7 @@ package com.twitter.cassovary.algorithms
 
 import com.twitter.cassovary.graph.{DirectedGraph, GraphDir}
 import com.twitter.cassovary.graph.LabeledNode
-import com.twitter.cassovary.util.io.{SetNodeLabelParser,NodeIntSetLabel}
+import com.twitter.cassovary.util.io.{WeightedSetNodeLabelParser,WeightedSetNodeLabel}
 import net.lag.logging.Logger
 import com.twitter.cassovary.util.Progress
 import java.io.{File,PrintWriter}
@@ -51,7 +51,7 @@ object LabelPropagation {
    * @param params LabelPropagationParams from above
    * @return An array of doubles, with indices corresponding to node ids
    */
-  def apply(graph: DirectedGraph, nodeLabelParser: SetNodeLabelParser, params: LabelPropagationParams): Array[Double] = {
+  def apply(graph: DirectedGraph, nodeLabelParser: WeightedSetNodeLabelParser, params: LabelPropagationParams): Array[Double] = {
     val lp = new LabelPropagation(graph, nodeLabelParser, params)
     lp.run
   }
@@ -64,19 +64,19 @@ object LabelPropagation {
    * @param afArray A matrix of doubles, same format as prArray, for writing into.
    * @return The updated array
    */
-  def iterate(graph: DirectedGraph, nodeLabelParser: SetNodeLabelParser, params: LabelPropagationParams, prMatrix: Array[Double], afMatrix: Array[Double]) = {
+  def iterate(graph: DirectedGraph, nodeLabelParser: WeightedSetNodeLabelParser, params: LabelPropagationParams, prMatrix: Array[Double], afMatrix: Array[Double]) = {
     val lp = new LabelPropagation(graph, nodeLabelParser, params)
     lp.iterate(0, prMatrix: Array[Double], afMatrix: Array[Double])
   }
 }
 
-private class LabelPropagation(graph: DirectedGraph, nodeLabelParser: SetNodeLabelParser, params: LabelPropagationParams) {
+private class LabelPropagation(graph: DirectedGraph, nodeLabelParser: WeightedSetNodeLabelParser, params: LabelPropagationParams) {
 
   private val log = Logger.get("LabelPropagation")
 
   val dampingFactor = params.dampingFactor
   val dampingAmount = (1.0D - dampingFactor) / graph.nodeCount
-  val nodeLabels: Array[NodeIntSetLabel] = graph.view.map(_.asInstanceOf[LabeledNode].label.asInstanceOf[NodeIntSetLabel]).toArray
+  val nodeLabels: Array[WeightedSetNodeLabel] = graph.view.map(_.asInstanceOf[LabeledNode].label.asInstanceOf[WeightedSetNodeLabel]).toArray
   //val numTopics = nodeLabels.reduceLeft(_ max _) + 1
   //val numTopics = graph.maxLabelIdx + 1
   val numTopics = nodeLabelParser.numDistinctLabels
@@ -117,10 +117,13 @@ private class LabelPropagation(graph: DirectedGraph, nodeLabelParser: SetNodeLab
     (0 to graph.nodeCount - 1) foreach { nodeId => 
       //var nodeTopicDistr = new Array[Double](numTopics); 
       val nodeLabel = nodeLabels(nodeId)
-      nodeLabel.intLabelSet.foreach { topicIdx =>
-        //nodeTopicDistr(nodeLabel) = 1.0D / topicCt(nodeLabel);
-	//beforePR(nodeId * numTopics + nodeLabel) = 1.0D / topicCt(nodeLabel)
-	beforePR(nodeId * numTopics + topicIdx) = 1.0D
+      if (nodeLabel != null) {
+        nodeLabel.weightedLabelSet.foreach { case(topicIdx, userTopicWeight) =>
+          //nodeTopicDistr(nodeLabel) = 1.0D / topicCt(nodeLabel);
+          //beforePR(nodeId * numTopics + nodeLabel) = 1.0D / topicCt(nodeLabel)
+          //beforePR(nodeId * numTopics + topicIdx) = 1.0D
+          beforePR(nodeId * numTopics + topicIdx) = userTopicWeight
+        }
       }
       //beforePR(nodeId) = nodeTopicDistr
       progress.inc

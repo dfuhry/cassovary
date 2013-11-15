@@ -29,12 +29,13 @@ object ArrayBasedDirectedNode {
    */
   def apply(nodeAndEdges: NodeIdEdgesMaxIdTrait, dir: StoredGraphDir) = {
     dir match {
-      case StoredGraphDir.OnlyIn | StoredGraphDir.OnlyOut | StoredGraphDir.Mutual =>
+      case StoredGraphDir.OnlyIn | StoredGraphDir.OnlyOut | StoredGraphDir.Mutual => {
         if (nodeAndEdges.isLabeled) {
           UniDirectionalLabeledNode(nodeAndEdges.id, nodeAndEdges.asInstanceOf[LabeledNodeIdEdgesMaxId].label, nodeAndEdges.edges, dir)
         } else {
           UniDirectionalNode(nodeAndEdges.id, nodeAndEdges.edges, dir)
         }
+      }
       case StoredGraphDir.BothInOut =>
         if (nodeAndEdges.isLabeled) {
           BiDirectionalLabeledNode(nodeAndEdges.id, nodeAndEdges.asInstanceOf[LabeledNodeIdEdgesMaxId].label, nodeAndEdges.edges)

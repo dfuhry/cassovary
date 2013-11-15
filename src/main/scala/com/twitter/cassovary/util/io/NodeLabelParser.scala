@@ -15,7 +15,7 @@ package com.twitter.cassovary.util.io
 
 import com.twitter.cassovary.graph.node.NodeLabel
 import scala.util.matching.Regex
-import scala.collection.mutable.{HashMap,SynchronizedMap}
+import scala.collection.mutable.{ArrayBuffer,HashMap,SynchronizedMap}
 
 trait NodeLabelParser {
   val labelIdToLabelIdx = new HashMap[String,Int] with SynchronizedMap[String,Int]
@@ -42,7 +42,14 @@ trait NodeLabelParser {
 
 
 class NodeIntLabel (var intLabel: Int) extends NodeLabel {
-  
+  override def equals(other: Any): Boolean =  {
+    other match {
+      case that: NodeIntLabel => 
+        (intLabel == that.intLabel)
+      case _ => false
+    }
+  }
+  override def toString = intLabel.toString
 }
 
 
@@ -50,13 +57,18 @@ class SimpleNodeLabelParser extends NodeLabelParser {
   def parseLabelStr(labelStr: String): NodeLabel = {
     new NodeIntLabel(labelIdToLabelIdx.getOrElseUpdate(labelStr, labelIdToLabelIdx.size))
   }
-
-
 }
 
 
 class NodeIntSetLabel (var intLabelSet: Array[Int]) extends NodeLabel {
-  
+  override def equals(other: Any): Boolean = {
+    other match {
+      case that: NodeIntSetLabel =>
+        intLabelSet.equals(that.intLabelSet)
+      case _ => false
+    }
+  }
+  override def toString = intLabelSet.toString
 }
 
 
@@ -69,3 +81,33 @@ class SetNodeLabelParser extends NodeLabelParser {
   }
 
 }
+
+
+class WeightedSetNodeLabel (var weightedLabelSet: Array[Pair[Int,Double]]) extends NodeLabel {
+  override def equals(other: Any): Boolean = {
+    other match {
+      case that: WeightedSetNodeLabel =>
+        weightedLabelSet.equals(that.weightedLabelSet)
+      case _ => false
+    }
+  }
+  override def toString = weightedLabelSet.toString
+}
+
+
+class WeightedSetNodeLabelParser extends NodeLabelParser {
+  
+  def parseLabelStr(labelStr: String) = {
+    var lblTokens = labelStr.split("\\s+")
+    assert(lblTokens.size % 2 == 0)
+    var labelWeightPairs: ArrayBuffer[Pair[Int,Double]] = new ArrayBuffer[Pair[Int,Double]]()
+    for (i <- 0 until lblTokens.size / 2) {
+      val labelId = lblTokens(i * 2)
+      val labelIdx = labelIdToLabelIdx.getOrElseUpdate(labelId, labelIdToLabelIdx.size)
+      labelWeightPairs += Pair(labelIdx, lblTokens(i * 2 + 1).toDouble)
+    }
+    new WeightedSetNodeLabel(labelWeightPairs.toArray)
+  }
+
+}
+

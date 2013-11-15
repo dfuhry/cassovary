@@ -25,7 +25,7 @@ class AdjacencyListGraphReaderSpec extends Specification  {
   val nodeMap = Map( 10 -> List(11, 12, 13), 11 -> List(12, 14), 12 -> List(14),
     13 -> List(12, 14), 14 -> List(15), 15 -> List(10, 11))
 
-  val labelMap = Map( 10 -> 0, 11 -> 1, 12 -> -1, 13 -> -1, 14 -> 0, 15 -> -1)
+  val labelMap: Map[Int,NodeIntLabel] = Map( 10 -> new NodeIntLabel(0), 11 -> new NodeIntLabel(1), 12 -> null, 13 -> null, 14 -> new NodeIntLabel(0), 15 -> null)
 
   /**
    * Compares the nodes in a graph and those defined by the nodeMap (id -> ids of neighbors),
@@ -65,20 +65,29 @@ class AdjacencyListGraphReaderSpec extends Specification  {
   /**
    * Compares the labels of nodes in a graph to those defined by a label map.
    */
-  def labelListEquals(g: DirectedGraph, labelMap: Map[Int,Int]) = {
+  def labelListEquals(g: DirectedGraph, labelMap: Map[Int,NodeIntLabel]) = {
     g.foreach { node =>
       labelMap.contains(node.id) mustBe true
-      node.asInstanceOf[LabeledNode].label mustBe labelMap(node.id)
+      val nodeLabel = node.asInstanceOf[LabeledNode].label.asInstanceOf[NodeIntLabel]
+      if (nodeLabel != null || labelMap(node.id) != null) {
+        nodeLabel must beEqualTo(labelMap(node.id))
+      }
     }
   }
 
   /**
    * Compares the labels of nodes in a graph to those defined by a label map.
    */
-  def labelListEqualsRenumbered(g: DirectedGraph, labelMap: Map[Int,Int], nodeRenumberer: NodeRenumberer) = {
-    g.foreach { node =>
-      labelMap.contains(nodeRenumberer.nodeIdxToNodeId(node.id)) mustBe true
-      node.asInstanceOf[LabeledNode].label mustBe labelMap(nodeRenumberer.nodeIdxToNodeId(node.id))
+  def labelListEqualsRenumbered(g: DirectedGraph, labelMap: Map[Int,NodeIntLabel], nodeRenumberer: NodeRenumberer) = {
+    g.foreach { node => {
+      val nodeIdx = nodeRenumberer.nodeIdxToNodeId(node.id)
+      labelMap.contains(nodeIdx) mustBe true
+      val nodeLabel = node.asInstanceOf[LabeledNode].label.asInstanceOf[NodeIntLabel]
+      labelMap.contains(nodeIdx) mustBe true
+      if (nodeLabel != null || labelMap(nodeIdx) != null) {
+        nodeLabel must beEqualTo(labelMap(nodeIdx))
+      }
+    }
     }
   }
 
@@ -88,8 +97,7 @@ class AdjacencyListGraphReaderSpec extends Specification  {
 
     doBefore{
       // Example using 2 threads to read in the graph
-      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes_adj",
-                                           new LabeledVertexReaderFactory()) {
+      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes_adj") {
           override val executorService = Executors.newFixedThreadPool(2)
         }.toSharedArrayBasedDirectedGraph()
     }
@@ -109,7 +117,8 @@ class AdjacencyListGraphReaderSpec extends Specification  {
   "AdjacencyListReader serial labeled" should {
 
     doBefore{
-      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes-2_labeled", new LabeledVertexReaderFactory()) {
+      val nodeLabelParser = new SimpleNodeLabelParser()
+      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes-2_labeled", new LabeledVertexReaderFactory(nodeLabelParser)) {
           override val executorService = MoreExecutors.sameThreadExecutor()
         }.toSharedArrayBasedDirectedGraph()
     }
@@ -133,7 +142,8 @@ class AdjacencyListGraphReaderSpec extends Specification  {
   "AdjacencyListReader parallel labeled" should {
 
     doBefore{
-      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes_labeled_adj", new LabeledVertexReaderFactory()) {
+      val nodeLabelParser = new SimpleNodeLabelParser()
+      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes_labeled_adj", new LabeledVertexReaderFactory(nodeLabelParser)) {
           override val executorService = Executors.newFixedThreadPool(2)
         }.toSharedArrayBasedDirectedGraph()
     }
@@ -159,7 +169,8 @@ class AdjacencyListGraphReaderSpec extends Specification  {
     var seqRenumberer = new SequentialNodeRenumberer()
 
     doBefore{
-      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes-2_labeled", new LabeledVertexReaderFactory(), seqRenumberer) {
+      val nodeLabelParser = new SimpleNodeLabelParser()
+      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes-2_labeled", new LabeledVertexReaderFactory(nodeLabelParser), seqRenumberer) {
           override val executorService = MoreExecutors.sameThreadExecutor()
         }.toSharedArrayBasedDirectedGraph()
     }
@@ -185,7 +196,8 @@ class AdjacencyListGraphReaderSpec extends Specification  {
     var seqRenumberer = new SequentialNodeRenumberer()
 
     doBefore{
-      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes_labeled_adj", new LabeledVertexReaderFactory(), seqRenumberer) {
+      val nodeLabelParser = new SimpleNodeLabelParser()
+      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes_labeled_adj", new LabeledVertexReaderFactory(nodeLabelParser), seqRenumberer) {
           override val executorService = Executors.newFixedThreadPool(2)
         }.toSharedArrayBasedDirectedGraph()
     }
@@ -206,5 +218,20 @@ class AdjacencyListGraphReaderSpec extends Specification  {
 
   }
 
+  "AdjacencyListReader serial weighted labeled renumbered" should {
+    val nodeLabelParser = new WeightedSetNodeLabelParser()
+
+    doBefore{
+      val seqRenumberer = new SequentialNodeRenumberer()
+      graph = new AdjacencyListGraphReader("src/test/resources/graphs/", "toy_6nodes-2_weighted_labeled", new LabeledVertexReaderFactory(nodeLabelParser), seqRenumberer) {
+          override val executorService = MoreExecutors.sameThreadExecutor()
+        }.toSharedArrayBasedDirectedGraph()
+    }
+
+    "have labels" in {
+      nodeLabelParser.numDistinctLabels mustBe 5
+    }
+
+  }
 
 }

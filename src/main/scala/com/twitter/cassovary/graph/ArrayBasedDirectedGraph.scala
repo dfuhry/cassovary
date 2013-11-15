@@ -94,6 +94,7 @@ object ArrayBasedDirectedGraph {
     var nodeWithOutEdgesMaxId = 0
     var numEdges = 0L
     var numNodes = 0
+    var nodesLabeled = false
 
     log.debug("loading nodes and out edges from file in parallel")
     val futures = Stats.time("graph_dump_load_partial_nodes_and_out_edges_parallel") {
@@ -107,6 +108,7 @@ object ArrayBasedDirectedGraph {
 
         val iterator = iteratorFunc()
         iterator foreach { item =>
+	  nodesLabeled = item.isLabeled
           id = item.id
           newMaxId = newMaxId max item.maxId
           varNodeWithOutEdgesMaxId = varNodeWithOutEdgesMaxId max item.id
@@ -158,7 +160,13 @@ object ArrayBasedDirectedGraph {
     var nodeWithOutEdgesCount = 0
     log.debug("creating nodes that have only in-coming edges")
     Stats.time("graph_load_creating_nodes_without_out_edges") {
-      val nodeAndEdges = NodeIdEdgesMaxId(-1, ArrayBasedDirectedNode.noNodes)
+      // TODO: Automatically dtermine whether to use labeled here
+      //val nodeAndEdges = NodeIdEdgesMaxId(-1, ArrayBasedDirectedNode.noNodes)
+      //val nodeAndEdges = LabeledNodeIdEdgesMaxId(-1, ArrayBasedDirectedNode.noNodes, null)
+      var nodeAndEdges: NodeIdEdgesMaxIdTrait = NodeIdEdgesMaxId(-1, ArrayBasedDirectedNode.noNodes)
+      if (nodesLabeled) {
+        nodeAndEdges = LabeledNodeIdEdgesMaxId(-1, ArrayBasedDirectedNode.noNodes, null)
+      }
       for ( id <- 0 to maxNodeId ) {
         if (nodeIdSet(id) == 1) {
           numNodes += 1
