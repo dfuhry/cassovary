@@ -135,9 +135,9 @@ private class LabelPropagation(graph: DirectedGraph, nodeLabelParser: WeightedSe
       log.info("LabelPropagation.run beginning %sth iteration".format(i))
       iterate(i, beforePR, afterPR)
 
-      val converg = convergence(beforePR, afterPR)
-      printf("Convergence after iteration %d: %.12f\n", i, converg)
       if (params.convergEpsilon > 0.0D) {
+        val converg = convergence(beforePR, afterPR)
+        printf("Convergence after iteration %d: %.12f\n", i, converg)
 	if (converg < params.convergEpsilon) {
 	  printf("Convergence after iteration %d: %f < convergEpsilon %f. Breaking.\n", i, converg, params.convergEpsilon)
           break
@@ -185,14 +185,20 @@ private class LabelPropagation(graph: DirectedGraph, nodeLabelParser: WeightedSe
       } else {
         // List Renormalization: list based on fraction of each topic associated with it.
 	val topicValsSum = beforePR.slice(nodeTopicIdx, nodeTopicIdx + numTopics).sum
+	val nodeNghCt = node.neighborCount(GraphDir.OutDir)
 	assert(!topicValsSum.isNaN())
         for (topicIdx <- 0 until numTopics) {
           var gtr = 0.0D
-          val beforeTopicVal = beforePR(nodeTopicIdx + topicIdx)
-          if (beforeTopicVal != 0.0D) {
-            gtr = beforeTopicVal * (beforeTopicVal / topicValsSum) / node.neighborCount(GraphDir.OutDir).toDouble
-            assert(!gtr.isNaN())
-          }
+	  if (nodeNghCt > 0) {
+            val beforeTopicVal = beforePR(nodeTopicIdx + topicIdx)
+            if (beforeTopicVal != 0.0D) {
+              gtr = beforeTopicVal * (beforeTopicVal / topicValsSum) / nodeNghCt.toDouble
+  	    if (gtr.isNaN()) {
+                printf("Error: beforeTopicVal %f * (beforeTopicVal %f / topicValsSum %f) / node.neighborCount %d returned NaN", beforeTopicVal, beforeTopicVal, topicValsSum, node.neighborCount(GraphDir.OutDir))
+  	    }
+              assert(!gtr.isNaN())
+            }
+	  }
           givenTopicRank(topicIdx) = gtr
         }
       }
